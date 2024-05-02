@@ -10,33 +10,10 @@ import numpy as np
 import imageio as iio
 from tqdm import tqdm
 from argparse import ArgumentParser
-from model.utils import init_seeds
 from einops import rearrange
-import pyshine as ps
-
-
-def add_header(img, header, add_space=True):
-    temp_path = 'temp.png'
-    iio.imsave(temp_path, img)
-    img = cv2.imread(temp_path)
-    os.remove(temp_path)
-    if add_space:
-        space = np.ones_like(img) * 108
-        space = space[:space.shape[0] // 8, ]
-        img = np.vstack([space, img])
-    return ps.putBText(img, header, text_offset_x=10, text_offset_y=10, vspace=10, hspace=10,
-                       font_scale=2.5, background_RGB=(108, 108, 108), text_RGB=(255, 250, 250),
-                       font=cv2.FONT_HERSHEY_PLAIN)[:, :, ::-1]
-
+from model.utils import init_seeds
 
 if __name__ == '__main__':
-    """
-    cmd:
-    sh ./tools/inference/inference.sh ./checkpoints/bit++_adobe240/cfg.yaml ./checkpoints/bit++_adobe240/latest.ckpt ./demo/00777.png ./demo/00785.png ./demo/00793.png ./demo/bit++_results/ 30
-    sh ./tools/inference/inference.sh ./checkpoints/bit_adobe240/cfg.yaml ./checkpoints/bit_adobe240/latest.ckpt ./demo/00777.png ./demo/00785.png ./demo/00793.png ./demo/bit_results/ 30
-    python inference.py --config ./checkpoints/bit_adobe240/cfg.yaml --checkpoint ./checkpoints/bit_adobe240/latest.ckpt --img_pre ./demo/00777.png --img_cur ./demo/00785.png --save_dir ./demo/bit_results/
-    --img_nxt $IMG2 // optional, if not provided, only two images are used
-    """
     parser = ArgumentParser(description='blur interpolation transformer')
     parser.add_argument('--local_rank', default=0, type=int, help='local rank')
     parser.add_argument('--config', default='./configs/cfg.yaml', help='path of config')
@@ -54,29 +31,42 @@ if __name__ == '__main__':
     with open(args.config) as f:
         cfgs = yaml.full_load(f)
 
-    # ddp initialization
-    torch.backends.cudnn.benchmark = True
-    local_rank = int(os.environ['LOCAL_RANK'])
-    print(f'local_rank: {local_rank}')
-    torch.cuda.set_device(local_rank)
-    device = torch.device("cuda", local_rank)
-    init_seeds(seed=local_rank)
-    dist.init_process_group(backend="nccl")
+    # Device initialization
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f'Using device: {device}')
+
+    # CUDA specific initializations if CUDA is available
+    if device.type == 'cuda':
+        torch.cuda.set_device(args.local_rank)
+        torch.backends.cudnn.benchmark = True
+
+    init_seeds(seed=args.local_rank)
+
+    # Distributed Data Parallel (DDP) Initialization
+    if torch.cuda.is_available():
+        dist.init_process_group(backend="nccl")
 
     # create model
     model_cls = getattr(importlib.import_module('model'), cfgs['model_args']['name'])
+
+    # Load model checkpoint with device mapping
+    if args.checkpoint is not None:
+        checkpoint = torch.load(args.checkpoint, map_location=device)
+    else:
+        checkpoint = None
+
     model = model_cls(**cfgs['model_args']['args'],
-                      optimizer_args=cfgs['optimizer_args'],
-                      scheduler_args=cfgs['scheduler_args'],
-                      loss_args=cfgs['loss_args'],
-                      local_rank=local_rank,
-                      load_from=args.checkpoint)
+                    optimizer_args=cfgs['optimizer_args'],
+                    scheduler_args=cfgs['scheduler_args'],
+                    loss_args=cfgs['loss_args'],
+                    local_rank=args.local_rank,
+                    load_from=checkpoint).to(device)
+
 
     save_dir = args.save_dir
-    if save_dir is not None:
-        os.makedirs(save_dir, exist_ok=True)
+    os.makedirs(save_dir, exist_ok=True)
 
-    # inference
+    # Inference and saving results
     eval_time_interval = 0
     ts = torch.linspace(start=0, end=1, steps=args.num, device=device)
     img_pre = cv2.imread(args.img_pre)
@@ -123,6 +113,9 @@ if __name__ == '__main__':
         with iio.get_writer(gif_path, mode='I') as writer:
             for img in gif_imgs:
                 writer.append_data(img[:, :, ::-1])
+
     print('total runtime: {:.3f}'.format(eval_time_interval))
     print('average runtime: {:.3f}'.format(eval_time_interval / args.num))
-    dist.destroy_process_group()
+    
+    if torch.cuda.is_available():
+        dist.destroy_process_group()
