@@ -5,6 +5,7 @@
 /demo/bit++_results
 __pycache__/
 **/checkpoints/
+**/datasets/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
