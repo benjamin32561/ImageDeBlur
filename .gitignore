@@ -1,4 +1,3 @@
-/checkpoints/*
 /experiments
 /results
 .idea/
@@ -6,6 +5,7 @@
 /demo/bit++_results
 __pycache__/
 bit_adobe240/
+**/checkpoints
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -34,6 +34,7 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+*.egg-info
 
 # PyInstaller
 # Usually these files are written by a python script from a template
