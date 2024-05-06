@@ -1,0 +1,23 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": [
+                "--config", "C:/Users/BEN/Desktop/ImageDeBlur/(Multi-image or Video)-Motion-Deblurring/BiT/checkpoints/bit_adobe240/cfg.yaml",
+                "--checkpoint", "C:/Users/BEN/Desktop/ImageDeBlur/(Multi-image or Video)-Motion-Deblurring/BiT/checkpoints/bit_adobe240/latest.ckpt",
+                "--img_pre", "C:/Users/BEN/Desktop/ImageDeBlur/(Multi-image or Video)-Motion-Deblurring/BiT/demo/00777.png",
+                "--img_cur", "C:/Users/BEN/Desktop/ImageDeBlur/(Multi-image or Video)-Motion-Deblurring/BiT/demo/00785.png",
+                "--save_dir", "C:/Users/BEN/Desktop/ImageDeBlur/(Multi-image or Video)-Motion-Deblurring/BiT/demo/bit_results/",
+                "--img_nxt", "C:/Users/BEN/Desktop/ImageDeBlur/(Multi-image or Video)-Motion-Deblurring/BiT/demo/00793.png"
+            ]
+        }
+    ]
+}

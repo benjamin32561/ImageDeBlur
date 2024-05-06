@@ -14,6 +14,9 @@ from einops import rearrange
 from model.utils import init_seeds
 
 if __name__ == '__main__':
+    """
+    python inference.py --config ./checkpoints/bit_adobe240/cfg.yaml --checkpoint ./checkpoints/bit_adobe240/latest.ckpt --img_pre ./demo/00777.png --img_cur ./demo/00785.png --img_nxt ./demo/00793.png --save_dir ./demo/bit_results/ 
+    """
     parser = ArgumentParser(description='blur interpolation transformer')
     parser.add_argument('--local_rank', default=0, type=int, help='local rank')
     parser.add_argument('--config', default='./configs/cfg.yaml', help='path of config')
@@ -22,7 +25,7 @@ if __name__ == '__main__':
     parser.add_argument('--img_cur', type=str, required=True, help='path of current blurry image')
     parser.add_argument('--img_nxt', type=str, default=None, help='path of next blurry image')
     parser.add_argument('--save_dir', type=str, required=True, help='where to save image results')
-    parser.add_argument('--num', type=int, default=11, help='number of extracted images')
+    parser.add_argument('--num', type=int, default=1, help='number of extracted images')
     parser.add_argument('--gif', type=bool, default=False, help='whether to generate the corresponding gif')
     parser.add_argument('--multi_infer', type=bool, default=True, help='multiple inferences with shared features')
     args = parser.parse_args()
@@ -49,18 +52,12 @@ if __name__ == '__main__':
     # create model
     model_cls = getattr(importlib.import_module('model'), cfgs['model_args']['name'])
 
-    # Load model checkpoint with device mapping
-    if args.checkpoint is not None:
-        checkpoint = torch.load(args.checkpoint, map_location=device)
-    else:
-        checkpoint = None
-
     model = model_cls(**cfgs['model_args']['args'],
                     optimizer_args=cfgs['optimizer_args'],
                     scheduler_args=cfgs['scheduler_args'],
                     loss_args=cfgs['loss_args'],
                     local_rank=args.local_rank,
-                    load_from=checkpoint).to(device)
+                    load_from=args.checkpoint)
 
 
     save_dir = args.save_dir
@@ -85,10 +82,12 @@ if __name__ == '__main__':
 
     if not args.multi_infer:
         for i, t in tqdm(enumerate(ts), total=args.num):
-            torch.cuda.synchronize()
+            if model.device.type == 'cuda':
+                torch.cuda.synchronize()
             time_stamp = time.time()
             pred_img = model.inference(lq_imgs, [t])
-            torch.cuda.synchronize()
+            if model.device.type == 'cuda':
+                torch.cuda.synchronize()
             eval_time_interval += time.time() - time_stamp
             pred_img = pred_img.detach().clamp(0, 1)[0][0]
             pred_img = rearrange(pred_img * 255., 'c h w -> h w c').cpu().detach().numpy().astype(np.uint8)
@@ -96,10 +95,12 @@ if __name__ == '__main__':
             cv2.imwrite(save_name, pred_img)
             gif_imgs.append(pred_img)
     else:
-        torch.cuda.synchronize()
+        if model.device.type == 'cuda':
+            torch.cuda.synchronize()
         time_stamp = time.time()
         pred_imgs = model.inference(lq_imgs, ts)
-        torch.cuda.synchronize()
+        if model.device.type == 'cuda':
+            torch.cuda.synchronize()
         eval_time_interval += time.time() - time_stamp
         pred_imgs = pred_imgs.detach().clamp(0, 1)[0]
         for i in range(args.num):

@@ -711,13 +711,18 @@ class Model:
         if ddp:
             # replace BN as SyncBN
             self.model = nn.SyncBatchNorm.convert_sync_batchnorm(self.model)
+
+        self.device = torch.device('cuda')
+        if not torch.cuda.is_available():
+            self.device = torch.device('cpu')
+            ddp = False
         # load checkpoint
         if (local_rank == 0) and (load_from is not None):
             self.load_model(load_from)
         # resume checkpoint
         if (local_rank == 0) and (resume_from is not None):
             self.load_model(resume_from)
-        self.device = torch.device("cuda", local_rank)
+        
         # move model to GPU
         self.model = self.model.to(self.device)
         # nulti-gpus wrapper
@@ -741,7 +746,9 @@ class Model:
             self.loss = getattr(loss, loss_args['name'])(**loss_args['args'])
 
     def load_model(self, load_from):
-        model_dict = torch.load(load_from)
+        # Load the model dictionary with the map_location parameter set to the determined device
+        model_dict = torch.load(load_from, map_location=self.device)
+        # Convert the checkpoint if necessary and load it into the model
         self.model.load_state_dict(ckpt_convert(model_dict['model']))
 
     def load_others(self, load_from):
