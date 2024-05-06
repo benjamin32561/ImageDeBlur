@@ -4,8 +4,7 @@
 /demo/bit_results
 /demo/bit++_results
 __pycache__/
-bit_adobe240/
-**/checkpoints
+**/checkpoints/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
