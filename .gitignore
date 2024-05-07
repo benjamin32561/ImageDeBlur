@@ -6,6 +6,10 @@
 __pycache__/
 checkpoints/
 datasets/
+input/
+output/
+
+*.pth
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
