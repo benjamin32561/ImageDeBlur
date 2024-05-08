@@ -19,17 +19,6 @@ def img2tensor(img, bgr2rgb=False, float32=True):
     img = img.astype(np.float32) / 255.
     return _img2tensor(img, bgr2rgb=bgr2rgb, float32=float32)
 
-def display(img1, img2):
-    fig = plt.figure(figsize=(25, 10))
-    ax1 = fig.add_subplot(1, 2, 1)
-    plt.title('Input image', fontsize=16)
-    ax1.axis('off')
-    ax2 = fig.add_subplot(1, 2, 2)
-    plt.title('NAFNet output', fontsize=16)
-    ax2.axis('off')
-    ax1.imshow(img1)
-    ax2.imshow(img2)
-
 def create_difference_gif(image1_path, image2_path, gif_path, num_transitions=5, line_width=5):
     img1 = Image.open(image1_path)
     img2 = Image.open(image2_path)
