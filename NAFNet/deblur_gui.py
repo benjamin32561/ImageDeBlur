@@ -1,8 +1,13 @@
 import tkinter as tk
 from tkinterdnd2 import DND_FILES, TkinterDnD
-from tkinter import filedialog, messagebox, ttk
+from tkinter import filedialog, ttk
 import threading
-import time
+import torch
+from basicsr.models import create_model
+from basicsr.utils.options import parse
+from deblur_functions import process_video, create_model
+
+DEFAULT_BATCH_SIZE = 32
 
 def select_input_file():
     file_path.set(filedialog.askopenfilename(title="Select a file", filetypes=[("Video files", "*.mp4;*.avi"), ("Image files", "*.jpg;*.png")]))
@@ -28,20 +33,21 @@ def stop_processing():
     progress_bar['value'] = 0
     check_button_state()
 
+def update_progress(processed, total):
+    progress = int((processed / total) * 100)
+    progress_bar['value'] = progress
+    app.update_idletasks()  # Update GUI elements
+
 def run_process():
     stop_event.clear()
-
-
-    total_time = 10  # Total time in seconds
-    increment = 100 / total_time  # Increment per second
-
-    for i in range(total_time):
-        if stop_event.is_set():
-            return
-        time.sleep(1)  # Simulate processing delay
-        progress_bar['value'] += increment  # Update progress bar
-
-    stop_processing()  # Reset after completion
+    batch_size = int(batch_size_entry.get()) if batch_size_entry.get().isdigit() else DEFAULT_BATCH_SIZE
+    
+    opt_path = './options/test/REDS/NAFNet-width64.yml'
+    opt = parse(opt_path, is_train=False)
+    opt['dist'] = False
+    model = create_model(opt)
+    process_video(model, file_path.get(), folder_path.get(), batch_size, update_progress)
+    stop_processing()
 
 def drop(event):
     file_path.set(event.data)
@@ -51,6 +57,7 @@ app.title("File Processor")
 
 file_path = tk.StringVar()
 folder_path = tk.StringVar()
+batch_size_entry = tk.StringVar(value="32")
 stop_event = threading.Event()
 
 # Layout
@@ -79,6 +86,15 @@ folder_entry.pack(side='left', fill='x', expand=True)
 
 folder_button = ttk.Button(output_frame, text="Browse...", command=select_output_folder)
 folder_button.pack(side='left', padx=(10, 0))
+
+batch_size_frame = ttk.Frame(app)
+batch_size_frame.pack(pady=10, padx=20, fill='x')
+
+batch_size_label = ttk.Label(batch_size_frame, text="Batch Size:")
+batch_size_label.pack(side='left', padx=(0, 10))
+
+batch_size_entry = ttk.Entry(batch_size_frame, textvariable=batch_size_entry, width=10)
+batch_size_entry.pack(side='left')
 
 start_button = ttk.Button(app, text="Start", command=start_processing, state='disabled')
 start_button.pack(pady=(10, 20))
