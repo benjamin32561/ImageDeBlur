@@ -1,0 +1,7 @@
+python: 3.9
+cuda: 11.3
+
+conda create -n deblur python=3.9
+conda activate deblur   
+
+pip install -r requirements.txt
