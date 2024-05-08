@@ -11,11 +11,10 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [
-                "config_file", "",
-                "ckpt_file", "",
-                "--img", "",
-                "--save_path", ""
-            ],
+                "C:/Users/BEN/Desktop/ImageDeBlur/NAFNet/input/00000000.png",
+                "C:/Users/BEN/Desktop/ImageDeBlur/NAFNet/output/",
+                "C:/Users/BEN/Desktop/ImageDeBlur/NAFNet/options/test/REDS/NAFNet-width64.yml"
+            ]
         }
     ]
 }

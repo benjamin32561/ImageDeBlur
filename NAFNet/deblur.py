@@ -84,15 +84,15 @@ def process_images(input_path, output_folder, NAFNet, create_gif = True):
             create_difference_gif(output_path, file, gif_path)
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: python script.py <input_path> <output_folder>")
+    if len(sys.argv) != 4:
+        print("Usage: python script.py <input_path> <output_folder> <opt_path>")
         sys.exit(1)
 
     input_path = sys.argv[1]
     output_folder = sys.argv[2]
+    opt_path = sys.argv[3]
 
     # Load model configuration and model
-    opt_path = './options/test/REDS/NAFNet-width64.yml'
     opt = parse(opt_path, is_train=False)
     opt['dist'] = False
     NAFNet = create_model(opt)
