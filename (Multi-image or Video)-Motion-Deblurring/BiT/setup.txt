@@ -1,4 +1,0 @@
-conda create -n BiT python=3.8.19
-conda activate BiT   
-
-pip install -r requirements.txt
