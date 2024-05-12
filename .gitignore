@@ -1,20 +1,12 @@
-/experiments
 /results
 .idea/
-/demo/bit_results
-/demo/bit++_results
 __pycache__/
-checkpoints/
-datasets/
-input/
-output/
-
-*.pth
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+*.pth
 
 # C extensions
 *.so

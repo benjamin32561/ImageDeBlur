@@ -42,7 +42,7 @@ def run_process():
     stop_event.clear()
     batch_size = int(batch_size_entry.get()) if batch_size_entry.get().isdigit() else DEFAULT_BATCH_SIZE
     
-    opt_path = './options/test/REDS/NAFNet-width64.yml'
+    opt_path = './models/NAFNet-width64.yml'
     opt = parse(opt_path, is_train=False)
     opt['dist'] = False
     model = create_model(opt)

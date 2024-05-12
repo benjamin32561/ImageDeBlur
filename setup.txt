@@ -1,7 +1,12 @@
 python: 3.9
-cuda: 11.3
+CUDA: 11.8
 
 conda create -n deblur python=3.9
 conda activate deblur   
 
 pip install -r requirements.txt
+pip install torch==2.1.2+cu118 torchaudio==2.1.2+cu118 torchvision==0.16.2+cu118 -f https://download.pytorch.org/whl/torch_stable.html
+
+update model path in ./models/NAFNet-width64.yml if needed
+
+download models from https://drive.usercontent.google.com/download?id=14D4V4raNYIOhETfcuuLI3bGLB-OYIv6X&authuser=0
