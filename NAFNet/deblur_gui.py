@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinterdnd2 import DND_FILES, TkinterDnD
+# from tkinterdnd2 import DND_FILES, TkinterDnD
 from tkinter import filedialog, ttk
 import threading
 import torch
@@ -52,7 +52,7 @@ def run_process():
 def drop(event):
     file_path.set(event.data)
 
-app = TkinterDnD.Tk()
+app = tk.Tk()
 app.title("File Processor")
 
 file_path = tk.StringVar()
@@ -69,8 +69,8 @@ file_label.pack(side='left', padx=(0, 10))
 
 file_entry = ttk.Entry(input_frame, textvariable=file_path, width=50)
 file_entry.pack(side='left', fill='x', expand=True)
-file_entry.drop_target_register(DND_FILES)
-file_entry.dnd_bind('<<Drop>>', drop)
+# file_entry.drop_target_register(DND_FILES)
+# file_entry.dnd_bind('<<Drop>>', drop)
 
 file_button = ttk.Button(input_frame, text="Browse...", command=select_input_file)
 file_button.pack(side='left', padx=(10, 0))

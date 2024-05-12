@@ -6,6 +6,9 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 import os
+import time
+import sys
+
 
 def imread(img_path):
   img = cv2.imread(img_path)
@@ -46,7 +49,10 @@ def process_video(model, video_path, output_folder, batch_size, progress_callbac
 
     batch_frames = []
     processed_frames = 0  # Track the number of processed frames
+    start_time = time.time()  # Start time for ETA and FPS calculations
+    total_proc_time = 0  # Accumulator for total processing time
 
+    print("Started processing video")
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -56,23 +62,44 @@ def process_video(model, video_path, output_folder, batch_size, progress_callbac
         batch_frames.append(frame_tensor)
 
         if len(batch_frames) == batch_size:
+            frame_proc_start = time.time()  # Time when batch processing starts
             batch_tensor = torch.cat(batch_frames, dim=0)
             processed_images = process_images(model, batch_tensor)
+            batch_proc_time = time.time() - frame_proc_start
+            total_proc_time += batch_proc_time  # Add current batch processing time to total
+
+            del batch_tensor  # Free memory immediately after usage
             for img in processed_images:
                 out.write(img)
             processed_frames += len(batch_frames)
             if progress_callback:
                 progress_callback(processed_frames, total_frames)
+            
+            # Calculate and display average FPS and update the progress and ETA
+            average_fps = processed_frames / total_proc_time if total_proc_time > 0 else float('inf')
+            elapsed_time = time.time() - start_time
+            estimated_total_time = elapsed_time / processed_frames * total_frames
+            eta = estimated_total_time - elapsed_time
+            progress = processed_frames / total_frames * 100
+            sys.stdout.write(f"\rProgress: {progress:.2f}% | ETA: {eta:.2f}s | Average FPS: {average_fps:.2f}")
+            sys.stdout.flush()
             batch_frames = []
 
     if batch_frames:
+        frame_proc_start = time.time()
         batch_tensor = torch.cat(batch_frames, dim=0)
         processed_images = process_images(model, batch_tensor)
+        batch_proc_time = time.time() - frame_proc_start
+        total_proc_time += batch_proc_time  # Include remaining frames in total time
+
         for img in processed_images:
             out.write(img)
         processed_frames += len(batch_frames)
         if progress_callback:
             progress_callback(processed_frames, total_frames)
 
+    average_fps = processed_frames / total_proc_time if total_proc_time > 0 else float('inf')
+
     cap.release()
     out.release()
+    print(f"\nVideo processing complete. Final Average Processing FPS: {average_fps:.2f}")
